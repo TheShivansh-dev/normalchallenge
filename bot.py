@@ -174,7 +174,7 @@ async def monitor_vc_and_ban():
                         else:
                             print(f"✅ {user_name} is safe (No camera/screen sharing).")
 
-                await asyncio.sleep(10)
+                await asyncio.sleep(5)
 
             except Exception as e:
                 print(f"⚠️ Error: {e}")
