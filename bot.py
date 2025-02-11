@@ -16,7 +16,7 @@ API_HASH = "7fce093ad6aaf5508e00a0ce6fdf1d8c"
 SESSION_FILE = "session_name.session"
 
 # ✅ Telegram Bot API Token (Use your own bot token here)
-BOT_TOKEN = "6991746723:AAFEDm_Rub5o3Khw7DSg1eEQSGtiQmrsS7E"
+BOT_TOKEN = "6991746723:AAHlUhKjN5Mbz_9mL15gzCMBziX7bvIVOng"
 
 # ✅ Group & User Details
 GROUP_USERNAME = '@iesp_0401'  # Replace with your group's username
