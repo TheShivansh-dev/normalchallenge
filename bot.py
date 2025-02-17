@@ -279,8 +279,9 @@ async def monitor_vc_and_ban():
                             print(f"✅ {user_name} is safe (No camera/screen sharing).")
 
                 await save_log()
+                log_data.clear()
                 count = count +1
-                if count>50:
+                if count>80:
                     asyncio.create_task(vclogsendafter10minute())  # Runs in the background
 
                 await asyncio.sleep(4)
