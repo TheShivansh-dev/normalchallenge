@@ -274,6 +274,7 @@ async def monitor_vc_and_ban():
                                 user,
                                 ChatBannedRights(until_date=None, view_messages=True)
                             ))
+                            await bot.send_message(chat_id=target_VC_lof_id, text=f"⚠️ Banned For Sharing Screen or Camera {user_name} {user_id}")
                             log_data.append([user_name, user_id, current_time, "Banned (Camera/Screen Sharing)"])
                         else:
                             print(f"✅ {user_name} is safe (No camera/screen sharing).")
