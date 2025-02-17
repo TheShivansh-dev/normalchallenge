@@ -282,7 +282,7 @@ async def monitor_vc_and_ban():
                 await save_log()
                 log_data.clear()
                 count = count +1
-                if count>80:
+                if count>350:
                     asyncio.create_task(vclogsendafter10minute())  # Runs in the background
 
                 await asyncio.sleep(4)
