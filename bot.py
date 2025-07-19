@@ -19,7 +19,7 @@ monitor_task = None
 monitor_task2 = None  # Holds the monitoring task
 
 # ✅ Telegram Bot API Token (Use your own bot token here)
-BOT_TOKEN = "6991746723:AAHlUhKjN5Mbz_9mL15gzCMBziX7bvIVOng"
+BOT_TOKEN = "8022424273:AAFfBI7c2LJ3W-03QMNajgQQBZI_P8krojc"
 
 # ✅ Group & User Details
 GROUP_USERNAME = '@iesp_0401'  # Replace with your group's username
