@@ -19,7 +19,7 @@ monitor_task = None
 monitor_task2 = None  # Holds the monitoring task
 
 # ✅ Telegram Bot API Token (Use your own bot token here)
-BOT_TOKEN = "8022424273:AAFfBI7c2LJ3W-03QMNajgQQBZI_P8krojc"
+BOT_TOKEN = "7506333604:AAE15hSwfje6V7jGQqUx1P6KaGP_9Phxxgo"
 
 # ✅ Group & User Details
 GROUP_USERNAME = '@iesp_0401'  # Replace with your group's username
@@ -313,3 +313,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
