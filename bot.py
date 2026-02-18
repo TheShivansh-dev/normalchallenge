@@ -9,6 +9,7 @@ from telethon import TelegramClient, events
 from telethon.tl.functions.channels import GetFullChannelRequest, EditBannedRequest
 from telethon.tl.functions.phone import GetGroupCallRequest
 from telethon.tl.types import ChatBannedRights
+
 from telegram import Bot
 
 # ✅ Telethon API Credentials
@@ -20,15 +21,18 @@ monitor_task2 = None  # Holds the monitoring task
 
 # ✅ Telegram Bot API Token (Use your own bot token here)
 BOT_TOKEN = "7506333604:AAE15hSwfje6V7jGQqUx1P6KaGP_9Phxxgo"
-
-# ✅ Group & User Details
+EXCEL_FILE_PATH = "allowed_StickerUserID.xlsx"
+EOWNER_EXCEL_FILE_PATH  = "owner_ExcelFile.xlsx"
+ALLOWED_ADMIN_GROUP = -1002137866227
+sticker_tracker = {}
+muted_users = set()
 GROUP_USERNAME = '@iesp_0401'  # Replace with your group's username
 ALLOWED_GROUP_ID = -1002137866227  # Only this group can add channels
 TARGET_USER_ID = -1002137866227  # User ID of the person who will receive the file
 
 VC_Log = "vc_log.xlsx"
 target_VC_lof_id = -1002359766306
-
+ALLOWED_GROUP_ID = -1001817635995 
 # ✅ Excel file for allowed channels
 EXCEL_FILE = "allowed_channels.xlsx"
 
@@ -302,6 +306,160 @@ async def vclogsendafter10minute():
     except Exception as e:
         print(f"⚠️ Error in sending file: {e}")
 
+@client.on(events.NewMessage(pattern=r"/addsticker (.+)"))
+async def add_sticker_user(event):
+    chat_id = event.chat_id
+
+    # Reload allowed users
+    ALLOWED_USERS = load_allowed_users()
+
+    # Allow only in admin group
+    if chat_id != ALLOWED_ADMIN_GROUP:
+        await event.reply("❌ This command can only be used in the admin group.")
+        return
+
+    try:
+        new_user_id = int(event.pattern_match.group(1))
+
+        if new_user_id in ALLOWED_USERS:
+            await event.reply("✅ This user is already allowed to send stickers.")
+            return
+
+        # Read existing Excel
+        df = pd.read_excel(EXCEL_FILE_PATH)
+
+        # Append new user
+        new_entry = pd.DataFrame({"User ID": [new_user_id]})
+        df = pd.concat([df, new_entry], ignore_index=True)
+
+        # Save file
+        df.to_excel(EXCEL_FILE_PATH, index=False)
+
+        await event.reply(f"✅ User {new_user_id} is now allowed to send stickers.")
+
+        # Send updated file
+        if os.path.exists(EXCEL_FILE_PATH):
+            await bot.send_document(
+                chat_id=ALLOWED_ADMIN_GROUP,
+                document=open(EXCEL_FILE_PATH, 'rb'),
+                caption="📄 Updated Allowed User List"
+            )
+
+    except ValueError:
+        await event.reply("⚠️ Invalid user ID. Please enter a valid number.")
+    except Exception as e:
+        await event.reply(f"⚠️ Error adding user: {e}")
+
+def ensure_user_excel():
+    if not os.path.exists(EXCEL_FILE_PATH):
+        df = pd.DataFrame({"User ID": []})
+        df.to_excel(EXCEL_FILE_PATH, index=False)
+
+def load_allowed_users():
+    ensure_user_excel()
+    df = pd.read_excel(EXCEL_FILE_PATH)
+    return set(df["User ID"].astype(int).tolist()) if not df.empty else set()
+
+from telegram import ChatPermissions
+
+@client.on(events.NewMessage(incoming=True))
+async def handle_sticker(event):
+    if not event.sticker:
+        return
+    print("sticker")
+    user_id = event.sender_id
+    chat_id = event.chat_id
+    current_time = time.time()
+
+    ALLOWED_USERS = load_allowed_users()
+
+    if user_id in ALLOWED_USERS:
+        return
+
+    try:
+        await event.delete()
+    except Exception as e:
+        print(f"Failed to delete sticker: {e}")
+        return
+
+    if user_id not in sticker_tracker:
+        sticker_tracker[user_id] = []
+
+    sticker_tracker[user_id].append(current_time)
+
+    sticker_tracker[user_id] = [
+        t for t in sticker_tracker[user_id]
+        if current_time - t <= 3
+    ]
+
+    if len(sticker_tracker[user_id]) > 3:
+        if user_id not in muted_users:
+            try:
+                await bot.restrict_chat_member(
+                    chat_id=chat_id,
+                    user_id=user_id,
+                    permissions=ChatPermissions(
+                        can_send_messages=False
+                    ),
+                    until_date=int(current_time) + 600  # 10 min
+                )
+
+                await bot.send_message(
+                    chat_id=chat_id,
+                    text=f"🚫 User {user_id} muted for 10 minutes due to sticker spam."
+                )
+
+                muted_users.add(user_id)
+                sticker_tracker[user_id] = []
+
+            except Exception as e:
+                print(f"Bot mute failed: {e}")
+
+        return
+
+    # Warning message
+    if user_id not in muted_users:
+        await bot.send_message(
+            chat_id=chat_id,
+            text="🚫 Only allowed users can send stickers."
+        )
+
+
+@client.on(events.NewMessage(incoming=True, chats=ALLOWED_GROUP_ID))
+async def handle_video(event):
+    if not event.video:
+        return  # Ignore non-video messages
+
+    user_id = event.sender_id
+    chat_id = event.chat_id
+
+    allowed_users = load_allowed_owner()
+
+    if user_id not in allowed_users:
+        try:
+            await event.delete()
+
+            await bot.send_message(
+                    chat_id=ALLOWED_ADMIN_GROUP,
+                    text=f"🚫 Not Allowed To Send here, Send in Study Stuff Group then Pin a Link here."
+                )
+            
+
+        except Exception as e:
+            print(f"Error deleting video: {e}")
+
+def load_allowed_owner():
+    try:
+        if not os.path.exists(EOWNER_EXCEL_FILE_PATH):
+            df = pd.DataFrame({"User ID": []})
+            df.to_excel(EOWNER_EXCEL_FILE_PATH, index=False)
+
+        df = pd.read_excel(EOWNER_EXCEL_FILE_PATH)
+        return set(df["User ID"].dropna().astype(int)) if not df.empty else set()
+
+    except Exception as e:
+        print(f"Error loading allowed users: {e}")
+        return set()
 
 # ✅ Run the bot
 async def main():
