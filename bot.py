@@ -438,11 +438,6 @@ async def handle_video(event):
     if user_id not in allowed_users:
         try:
             await event.delete()
-
-            await bot.send_message(
-                    chat_id=ALLOWED_ADMIN_GROUP,
-                    text=f"🚫 Not Allowed To Send here, Send in Study Stuff Group then Pin a Link here."
-                )
             
 
         except Exception as e:
@@ -471,4 +466,5 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 
